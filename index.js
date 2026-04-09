@@ -24,6 +24,8 @@ const config = {
 
 //TODO: respond to GET requests on "/" with the config object above
 app.get("/", (req, res) => {
+	console.log("test");
+	
 	res.json(config);
 });
 

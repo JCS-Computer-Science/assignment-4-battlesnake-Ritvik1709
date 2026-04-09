@@ -26,8 +26,8 @@ export default function move(gameState){
     // TODO: Step 1 - Prevent your Battlesnake from moving out of bounds
     // gameState.board contains an object representing the game board including its width and height
     // https://docs.battlesnake.com/api/objects/board
-    let boardWidth = gameState.board.width;
-    let boardHeight = gameState.board.height;
+    const boardWidth = gameState.board.width;
+    const boardHeight = gameState.board.height;
 
     if (myHead.x === 0)             moveSafety.left = false;
     if (myHead.x === boardWidth - 1) moveSafety.right = false;
@@ -37,11 +37,29 @@ export default function move(gameState){
     // TODO: Step 2 - Prevent your Battlesnake from colliding with itself
     // gameState.you contains an object representing your snake, including its coordinates
     // https://docs.battlesnake.com/api/objects/battlesnake
-    
+    const myBody = gameState.you.body;
+ 
+    for (const segment of myBody) {
+        if (segment.x === myHead.x + 1 && segment.y === myHead.y) moveSafety.right = false;
+        if (segment.x === myHead.x - 1 && segment.y === myHead.y) moveSafety.left = false;
+        if (segment.y === myHead.y + 1 && segment.x === myHead.x) moveSafety.up = false;
+        if (segment.y === myHead.y - 1 && segment.x === myHead.x) moveSafety.down = false;
+    }
     
     // TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
     // gameState.board.snakes contains an array of enemy snake objects, which includes their coordinates
     // https://docs.battlesnake.com/api/objects/battlesnake
+    const opponents = gameState.board.snakes;
+ 
+    for (const snake of opponents) {
+        for (const segment of snake.body) {
+            if (segment.x === myHead.x + 1 && segment.y === myHead.y) moveSafety.right = false;
+            if (segment.x === myHead.x - 1 && segment.y === myHead.y) moveSafety.left = false;
+            if (segment.y === myHead.y + 1 && segment.x === myHead.x) moveSafety.up = false;
+            if (segment.y === myHead.y - 1 && segment.x === myHead.x) moveSafety.down = false;
+        }
+    }
+ 
     
     // Are there any safe moves left?
     
@@ -55,10 +73,24 @@ export default function move(gameState){
     }
     
     // Choose a random move from the safe moves
-    const nextMove = safeMoves[Math.floor(Math.random() * safeMoves.length)];
+    let nextMove = safeMoves[Math.floor(Math.random() * safeMoves.length)];
     
     // TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
     // gameState.board.food contains an array of food coordinates https://docs.battlesnake.com/api/objects/board
+    const food = gameState.board.food;
+
+    if (food.length > 0) {
+        const closestFood = food.reduce((best, f) => {
+            const dist = Math.abs(f.x - myHead.x) + Math.abs(f.y - myHead.y);
+            const bestDist = Math.abs(best.x - myHead.x) + Math.abs(best.y - myHead.y);
+            return dist < bestDist ? f : best;
+        });
+
+        if (closestFood.x > myHead.x && moveSafety.right)     nextMove = "right";
+        else if (closestFood.x < myHead.x && moveSafety.left)  nextMove = "left";
+        else if (closestFood.y > myHead.y && moveSafety.up)    nextMove = "up";
+        else if (closestFood.y < myHead.y && moveSafety.down)  nextMove = "down";
+    }
     
     console.log(`MOVE ${gameState.turn}: ${nextMove}`)
     return { move: nextMove };

@@ -65,16 +65,25 @@ export default function move(gameState){
     const blockedSquares = new Set();
 
     for (const snake of gameState.board.snakes) {
-        const enemyWillGrow = gameState.board.food.some(f => f.x === snake.body[0].x && f.y === snake.body[0].y);
-        const enemyBody = enemyWillGrow ? snake.body : snake.body.slice(0, -1);
+    const enemyWillGrow = gameState.board.food.some(f => f.x === snake.body[0].x && f.y === snake.body[0].y);
+    const enemyBody = enemyWillGrow ? snake.body : snake.body.slice(0, -1);
 
-        for (const part of enemyBody) {
-            blockedSquares.add(`${part.x},${part.y}`);
-            for (const [dir, pos] of Object.entries(possibleMoves)) {
-                if (part.x === pos.x && part.y === pos.y) moveSafety[dir] = false;
-            }
-        }
+    for (let i = 0; i < enemyBody.length; i++) {
+    const part = enemyBody[i];
+
+    // skip head — handled separately
+    if (i === 0) continue;
+
+    blockedSquares.add(`${part.x},${part.y}`);
+}
+}
+
+// apply blocking once
+for (const [dir, pos] of Object.entries(possibleMoves)) {
+    if (blockedSquares.has(`${pos.x},${pos.y}`)) {
+        moveSafety[dir] = false;
     }
+}
 
     // avoid head-to-head with snakes that are the same length or longer (we'd lose)
     for (const snake of gameState.board.snakes) {
@@ -82,20 +91,46 @@ export default function move(gameState){
         const enemyHead = snake.body[0];
         for (const [dir, pos] of Object.entries(possibleMoves)) {
             const dist = Math.abs(pos.x - enemyHead.x) + Math.abs(pos.y - enemyHead.y);
-            if (dist === 1 && snake.body.length >= gameState.you.body.length - 1) {
+            if (dist === 1 && snake.body.length >= gameState.you.body.length) {
                 moveSafety[dir] = false;
             }
         }
     }
 
-    // avoid hazard squares
-    for (const [dir, pos] of Object.entries(possibleMoves)) {
-        for (const hazard of (gameState.board.hazards || [])) {
-            if (hazard.x === pos.x && hazard.y === pos.y) moveSafety[dir] = false;
-            blockedSquares.add(`${hazard.x},${hazard.y}`);
+// block squares enemy heads can move into (prevent future head-to-head)
+for (const snake of gameState.board.snakes) {
+    if (snake.id === gameState.you.id) continue;
+
+    const head = snake.body[0];
+    const enemyMoves = [
+        { x: head.x,     y: head.y + 1 },
+        { x: head.x,     y: head.y - 1 },
+        { x: head.x - 1, y: head.y     },
+        { x: head.x + 1, y: head.y     }
+    ];
+
+    for (const move of enemyMoves) {
+        for (const [dir, pos] of Object.entries(possibleMoves)) {
+            if (pos.x === move.x && pos.y === move.y) {
+                // avoid if enemy is same or larger
+                if (snake.body.length >= gameState.you.body.length) {
+                    moveSafety[dir] = false;
+                }
+            }
         }
     }
+}
 
+    // avoid hazard squares
+    for (const hazard of (gameState.board.hazards || [])) {
+    blockedSquares.add(`${hazard.x},${hazard.y}`);
+}
+
+for (const [dir, pos] of Object.entries(possibleMoves)) {
+    if (blockedSquares.has(`${pos.x},${pos.y}`)) {
+        moveSafety[dir] = false;
+    }
+}
     // Are there any safe moves left?
     //Object.keys(moveSafety) returns ["up", "down", "left", "right"]
     //.filter() filters the array based on the function provided as an argument (using arrow function syntax here)

@@ -121,24 +121,15 @@ for (const snake of gameState.board.snakes) {
     }
 }
 
-    // avoid hazard squares
-    for (const hazard of (gameState.board.hazards || [])) {
-    blockedSquares.add(`${hazard.x},${hazard.y}`);
-}
-
-for (const [dir, pos] of Object.entries(possibleMoves)) {
-    if (blockedSquares.has(`${pos.x},${pos.y}`)) {
-        moveSafety[dir] = false;
-    }
-}
+    // hazards don't do damage, so we can move through them
     // Are there any safe moves left?
     //Object.keys(moveSafety) returns ["up", "down", "left", "right"]
     //.filter() filters the array based on the function provided as an argument (using arrow function syntax here)
     //In this case we want to filter out any of these directions for which moveSafety[direction] == false
     const safeMoves = Object.keys(moveSafety).filter(dir => moveSafety[dir]);
     if (safeMoves.length === 0) {
-        console.log(`MOVE ${gameState.turn}: No safe moves detected! Moving down`);
-        return { move: "down" };
+        console.log(`MOVE ${gameState.turn}: No safe moves detected! Trapped.`);
+        return { move: Object.keys(possibleMoves)[0] };
     }
 
     let nextMove = null;

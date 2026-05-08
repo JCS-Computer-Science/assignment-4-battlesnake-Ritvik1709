@@ -212,8 +212,6 @@ for (const snake of gameState.board.snakes) {
             }
         }
 
-        // small bonus when eating since growing means the tail spot frees up later
-        return seen.size + (willGrow ? 5 : 0);
     }
 
     // trap opponents against wall - moves toward enemy if they're stuck near a wall

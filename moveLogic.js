@@ -45,7 +45,7 @@ export default function move(gameState){
     // https://docs.battlesnake.com/api/objects/battlesnake
     const myBody = gameState.you.body;
 
-    // track per-direction whether eating food means the tail stays (grows) or moves away (safe)
+    // track whether eating food means the tail stays (grows) or moves away (safe)
     const moveWillGrow = {};
     for (const [dir, pos] of Object.entries(possibleMoves)) {
         moveWillGrow[dir] = gameState.board.food.some(f => f.x === pos.x && f.y === pos.y);
@@ -71,7 +71,6 @@ export default function move(gameState){
     for (let i = 0; i < enemyBody.length; i++) {
     const part = enemyBody[i];
 
-    // skip head — handled separately
     if (i === 0) continue;
 
     blockedSquares.add(`${part.x},${part.y}`);
@@ -85,7 +84,7 @@ for (const [dir, pos] of Object.entries(possibleMoves)) {
     }
 }
 
-    // avoid head-to-head with snakes that are the same length or longer (we'd lose)
+    // avoid head-to-head with snakes that are the same length or longer
     for (const snake of gameState.board.snakes) {
         if (snake.id === gameState.you.id) continue;
         const enemyHead = snake.body[0];
@@ -97,7 +96,7 @@ for (const [dir, pos] of Object.entries(possibleMoves)) {
         }
     }
 
-// block squares enemy heads can move into (prevent future head-to-head)
+// block squares enemy heads can move into 
 for (const snake of gameState.board.snakes) {
     if (snake.id === gameState.you.id) continue;
 
@@ -121,7 +120,12 @@ for (const snake of gameState.board.snakes) {
     }
 }
 
-    // hazards don't do damage, so we can move through them
+  // Avoid hazards
+
+    for (const hazard of gameState.board.hazards) {
+        blockedSquares.add(`${hazard.x},${hazard.y}`);
+    }
+
     // Are there any safe moves left?
     //Object.keys(moveSafety) returns ["up", "down", "left", "right"]
     //.filter() filters the array based on the function provided as an argument (using arrow function syntax here)
@@ -153,7 +157,7 @@ for (const snake of gameState.board.snakes) {
 
     if (bestMove) nextMove = bestMove;
 
-    // if health is low, head toward the closest food (but don't sacrifice too much space)
+    // if health is low, head toward the closest food
     if (gameState.you.health < 40 && gameState.board.food.length > 0) {
         let closestFood = null;
         let closestDist = Infinity;
@@ -212,6 +216,7 @@ for (const snake of gameState.board.snakes) {
             }
         }
 
+        return seen.size;
     }
 
     // trap opponents against wall - moves toward enemy if they're stuck near a wall
